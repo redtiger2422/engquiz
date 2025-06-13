@@ -1,0 +1,351 @@
+안녕하세요! 올려주신 사진 속 단어들로 재미있는 영단어 퀴즈 게임을 만들어 드릴게요.  아래 코드를 복사해서 HTML 파일로 저장한 뒤 열어보세요. (예: `quiz.html`)
+
+---
+
+### 👑 초등학생 영단어 퀴즈 👑
+
+이름을 입력하고 퀴즈를 시작해 보세요! 총 4단계의 퀴즈를 풀고 점수를 확인해 보세요.
+
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👑 초등학생 영단어 퀴즈 👑</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poor+Story&display=swap');
+        
+        body {
+            font-family: 'Poor Story', cursive;
+            background-color: #f0f8ff;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h1, h2 {
+            color: #ff69b4;
+        }
+        
+        input[type="text"] {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            width: 80%;
+            margin-top: 10px;
+            font-family: 'Poor Story', cursive;
+            font-size: 1.2em;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            margin-top: 20px;
+            font-family: 'Poor Story', cursive;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+        
+        .options button {
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+            background-color: #87CEEB;
+        }
+        
+        .options button.correct {
+            background-color: #90ee90;
+        }
+
+        .options button.incorrect {
+            background-color: #f08080;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .correct-feedback {
+            color: #2e8b57;
+        }
+
+        .incorrect-feedback {
+            color: #dc143c;
+        }
+
+        #quiz-container, #result-container {
+            display: none;
+        }
+        
+        #progress-bar-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 20px;
+            background-color: #ffc107;
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        
+        .set-title {
+            background-color: #ffc107;
+            padding: 5px 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container" id="start-container">
+        <h1>👑 신나는 영단어 퀴즈 👑</h1>
+        <p>이름을 입력하고 퀴즈를 시작해요!</p>
+        <input type="text" id="name" placeholder="여기에 이름 입력!">
+        <button class="button" onclick="startQuiz()">퀴즈 시작! 🎉</button>
+    </div>
+
+    <div class="container" id="quiz-container">
+        <div id="status">
+            <span id="score">점수: 0</span>
+            <div class="set-title" id="set-title"></div>
+        </div>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+        <h2 id="question"></h2>
+        <div id="answer-area"></div>
+        <div id="feedback" class="feedback"></div>
+        <button class="button" id="next-btn" style="display:none;" onclick="nextQuestion()">다음 문제로</button>
+    </div>
+
+    <div class="container" id="result-container">
+        <h1>🎉 퀴즈 끝! 수고했어요! 🎉</h1>
+        <h2 id="result-text"></h2>
+        <p>서버로 점수를 보내 친구들과 순위를 비교해 보세요!</p>
+        <button class="button" onclick="submitScore()">점수 전송하기 🚀</button>
+    </div>
+
+    <script>
+        const words = [
+            { eng: 'company', kor: '회사' },
+            { eng: 'boss', kor: '상사, 사장' },
+            { eng: 'staff', kor: '직원' },
+            { eng: 'partner', kor: '동료, 파트너' },
+            { eng: 'business', kor: '사업, 업무' },
+            { eng: 'factory', kor: '공장' },
+            { eng: 'project', kor: '계획, 프로젝트' },
+            { eng: 'seminar', kor: '세미나, 토론회' },
+            { eng: 'file', kor: '파일' },
+            { eng: 'cabinet', kor: '캐비닛, 보관장' }
+        ];
+
+        let currentSet = 1;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userName = '';
+        let currentWordList = [];
+
+        const startContainer = document.getElementById('start-container');
+        const quizContainer = document.getElementById('quiz-container');
+        const resultContainer = document.getElementById('result-container');
+        const nextBtn = document.getElementById('next-btn');
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function startQuiz() {
+            userName = document.getElementById('name').value;
+            if (userName.trim() === '') {
+                alert('이름을 꼭 입력해주세요! 😄');
+                return;
+            }
+            startContainer.style.display = 'none';
+            quizContainer.style.display = 'block';
+            startSet(1);
+        }
+
+        function startSet(setNumber) {
+            currentSet = setNumber;
+            currentQuestionIndex = 0;
+            currentWordList = shuffle([...words]);
+            document.getElementById('set-title').innerText = `ROUND ${currentSet}`;
+            showQuestion();
+        }
+
+        function updateProgress() {
+            const totalQuestionsInGame = words.length * 4;
+            const completedQuestions = ((currentSet - 1) * words.length) + currentQuestionIndex;
+            const progress = (completedQuestions / totalQuestionsInGame) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        function showQuestion() {
+            updateProgress();
+            nextBtn.style.display = 'none';
+            document.getElementById('feedback').innerHTML = '';
+            
+            const questionData = currentWordList[currentQuestionIndex];
+            const questionEl = document.getElementById('question');
+            const answerArea = document.getElementById('answer-area');
+            answerArea.innerHTML = '';
+
+            if (currentSet === 1) {
+                // Set 1: Multiple Choice (Word -> Meaning)
+                questionEl.innerText = questionData.eng;
+                
+                const options = [questionData.kor];
+                while (options.length < 4) {
+                    const randomWord = words[Math.floor(Math.random() * words.length)];
+                    if (!options.includes(randomWord.kor)) {
+                        options.push(randomWord.kor);
+                    }
+                }
+                
+                const shuffledOptions = shuffle(options);
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'options';
+                shuffledOptions.forEach(option => {
+                    const button = document.createElement('button');
+                    button.innerText = option;
+                    button.className = 'button';
+                    button.onclick = () => checkAnswer(option === questionData.kor, button);
+                    optionsDiv.appendChild(button);
+                });
+                answerArea.appendChild(optionsDiv);
+
+            } else {
+                // Sets 2, 3, 4: Fill in the blank (Meaning -> Word)
+                questionEl.innerText = questionData.kor;
+                
+                let percentage = 0;
+                if (currentSet === 2) percentage = 0.2;
+                if (currentSet === 3) percentage = 0.5;
+                if (currentSet === 4) percentage = 1.0;
+
+                let placeholder = maskWord(questionData.eng, percentage);
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'text-answer';
+                input.placeholder = placeholder;
+                
+                const submitBtn = document.createElement('button');
+                submitBtn.innerText = '정답 확인';
+                submitBtn.className = 'button';
+                submitBtn.style.marginTop = '10px';
+                submitBtn.onclick = () => {
+                    const userAnswer = document.getElementById('text-answer').value;
+                    checkAnswer(userAnswer.toLowerCase().trim() === questionData.eng);
+                };
+                
+                answerArea.appendChild(input);
+                answerArea.appendChild(submitBtn);
+                input.focus();
+                input.onkeyup = (event) => {
+                    if (event.key === 'Enter') {
+                        submitBtn.click();
+                    }
+                };
+            }
+        }
+
+        function maskWord(word, percentage) {
+            if (percentage === 1.0) return '???';
+            let masked = word.split('');
+            let charsToHide = Math.floor(word.length * percentage);
+            let indices = Array.from(Array(word.length).keys());
+            shuffle(indices);
+            for (let i = 0; i < charsToHide; i++) {
+                masked[indices[i]] = '_';
+            }
+            return masked.join('');
+        }
+        
+        function checkAnswer(isCorrect, buttonEl = null) {
+            const feedbackEl = document.getElementById('feedback');
+            const answerArea = document.getElementById('answer-area');
+            
+            // Disable all inputs after answering
+            answerArea.querySelectorAll('button, input').forEach(el => el.disabled = true);
+            
+            if (isCorrect) {
+                score += 10;
+                feedbackEl.innerHTML = '<span class="correct-feedback">정답이에요! 🥳 +10점</span>';
+                if (buttonEl) {
+                    buttonEl.classList.add('correct');
+                }
+            } else {
+                const correctAnswer = currentWordList[currentQuestionIndex].eng;
+                feedbackEl.innerHTML = `<span class="incorrect-feedback">아쉬워요! 정답은 '${correctAnswer}' 였어요. 😢</span>`;
+                if (buttonEl) {
+                    buttonEl.classList.add('incorrect');
+                }
+            }
+            document.getElementById('score').innerText = `점수: ${score}`;
+            nextBtn.style.display = 'inline-block';
+        }
+        
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex >= currentWordList.length) {
+                // End of set
+                currentSet++;
+                if (currentSet > 4) {
+                    showResult();
+                } else {
+                    startSet(currentSet);
+                }
+            } else {
+                showQuestion();
+            }
+        }
+
+        function showResult() {
+            quizContainer.style.display = 'none';
+            resultContainer.style.display = 'block';
+            document.getElementById('result-text').innerText = `${userName} 친구의 최종 점수는 ${score}점 입니다!`;
+        }
+        
+        function submitScore() {
+            // 이 부분은 실제 서버로 데이터를 보내는 코드로 대체될 수 있습니다.
+            // 예: fetch('/api/scores', { method: 'POST', body: JSON.stringify({ name: userName, score: score }) });
+            alert(`'${userName}'님의 점수(${score}점)가 서버로 전송되었습니다! (데모)`);
+        }
+
+    </script>
+</body>
+</html>
+```
