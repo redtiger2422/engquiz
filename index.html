@@ -6,7 +6,6 @@
     <title>👑 초등학생 영단어 퀴즈 👑</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poor+Story&display=swap');
-        
         body {
             font-family: 'Poor Story', cursive;
             background-color: #f0f8ff;
@@ -18,7 +17,6 @@
             margin: 0;
             text-align: center;
         }
-
         .container {
             background-color: #fff;
             padding: 30px;
@@ -27,11 +25,9 @@
             width: 90%;
             max-width: 500px;
         }
-
         h1, h2 {
             color: #ff69b4;
         }
-        
         input[type="text"] {
             padding: 10px;
             border: 2px solid #ddd;
@@ -41,7 +37,6 @@
             font-family: 'Poor Story', cursive;
             font-size: 1.2em;
         }
-
         .button {
             background-color: #4CAF50;
             color: white;
@@ -54,51 +49,41 @@
             font-family: 'Poor Story', cursive;
             transition: background-color 0.3s;
         }
-
         .button:hover {
             background-color: #45a049;
         }
-        
         .options button {
             display: block;
             width: 100%;
             margin-top: 10px;
             background-color: #87CEEB;
         }
-        
         .options button.correct {
             background-color: #90ee90;
         }
-
         .options button.incorrect {
             background-color: #f08080;
         }
-
         .feedback {
             margin-top: 20px;
             font-size: 1.5em;
             font-weight: bold;
         }
-        
         .correct-feedback {
             color: #2e8b57;
         }
-
         .incorrect-feedback {
             color: #dc143c;
         }
-
         #quiz-container, #result-container {
             display: none;
         }
-        
         #progress-bar-container {
             width: 100%;
             background-color: #ddd;
             border-radius: 10px;
             margin-top: 15px;
         }
-
         #progress-bar {
             width: 0%;
             height: 20px;
@@ -106,7 +91,6 @@
             border-radius: 10px;
             transition: width 0.5s;
         }
-        
         .set-title {
             background-color: #ffc107;
             padding: 5px 10px;
@@ -115,10 +99,30 @@
             margin-bottom: 15px;
             font-size: 1.1em;
         }
-
+        .madeby {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            width: 100vw;
+            text-align: center;
+            font-size: 1em;
+            color: #aaa;
+            font-family: 'Poor Story', cursive;
+            letter-spacing: 1px;
+            z-index: 99;
+            pointer-events: none;
+            user-select: none;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .madeby { font-size: 0.95em; }
+        }
     </style>
 </head>
 <body>
+    <!-- 배경음악 및 효과음 오디오 추가 -->
+    <audio id="bgm" src="kids.mp3" loop preload="auto"></audio>
+    <audio id="correct-sound" src="coin.mp3" preload="auto"></audio>
 
     <div class="container" id="start-container">
         <h1>👑 신나는 영단어 퀴즈 👑</h1>
@@ -148,6 +152,8 @@
         <button class="button" onclick="submitScore()">점수 전송하기 🚀</button>
     </div>
 
+    <div class="madeby">Made by 적호약사</div>
+
     <script>
         const words = [
             { eng: 'company', kor: '회사' },
@@ -173,6 +179,23 @@
         const resultContainer = document.getElementById('result-container');
         const nextBtn = document.getElementById('next-btn');
 
+        // 오디오 컨트롤
+        const bgm = document.getElementById('bgm');
+        const correctSound = document.getElementById('correct-sound');
+
+        // 모바일/PC 자동재생 문제로, 첫 클릭(퀴즈 시작)시 play
+        function playBGM() {
+            if (bgm.paused) {
+                bgm.volume = 0.25; // 살짝 작게
+                bgm.play().catch(()=>{}); // play 에러 무시
+            }
+        }
+
+        function playCorrectSound() {
+            correctSound.currentTime = 0;
+            correctSound.play().catch(()=>{});
+        }
+
         function shuffle(array) {
             return array.sort(() => Math.random() - 0.5);
         }
@@ -185,6 +208,7 @@
             }
             startContainer.style.display = 'none';
             quizContainer.style.display = 'block';
+            playBGM(); // 배경음악 시작
             startSet(1);
         }
 
@@ -295,6 +319,7 @@
             if (isCorrect) {
                 score += 10;
                 feedbackEl.innerHTML = '<span class="correct-feedback">정답이에요! 🥳 +10점</span>';
+                playCorrectSound(); // 정답 효과음
                 if (buttonEl) {
                     buttonEl.classList.add('correct');
                 }
@@ -335,8 +360,6 @@
             // 예: fetch('/api/scores', { method: 'POST', body: JSON.stringify({ name: userName, score: score }) });
             alert(`'${userName}'님의 점수(${score}점)가 서버로 전송되었습니다! (데모)`);
         }
-
     </script>
 </body>
 </html>
-```
